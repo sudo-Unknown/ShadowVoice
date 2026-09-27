@@ -22,7 +22,7 @@ export const config = {
     ollamaUrl: process.env.OLLAMA_URL || 'http://127.0.0.1:11434',
     ollamaModel: process.env.OLLAMA_MODEL || 'cyber-coder:fast',
     groqApiKey: process.env.GROQ_API_KEY || '',
-    groqModel: process.env.GROQ_MODEL || 'llama-3.1-8b-instant',
+    groqModel: process.env.GROQ_MODEL || 'qwen/qwen3.8-27b',
     openaiApiKey: process.env.OPENAI_API_KEY || '',
     openaiModel: process.env.OPENAI_MODEL || 'gpt-4o-mini'
   },
