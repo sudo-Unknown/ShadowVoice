@@ -52,6 +52,7 @@ app.post('/api/simulator/start', (req, res) => {
   const callId = `web-${Date.now()}`;
   const settings = getAllSettings();
   const ownerName = settings.owner_name || 'Smit';
+  const language = req.body?.language || settings.default_language || 'auto';
 
   createCall({
     id: callId,
@@ -60,12 +61,19 @@ app.post('/api/simulator/start', (req, res) => {
     channel: 'web_simulator'
   });
 
-  const greeting = `Hi! You've reached ${ownerName}'s AI representative. ${ownerName} is currently unavailable. How can I help you, or would you like to leave a message?`;
+  let greeting = `Hi! You've reached ${ownerName}'s AI representative. ${ownerName} is currently unavailable. How can I help you, or would you like to leave a message?`;
+  if (language === 'mr-IN') {
+    greeting = `नमस्कार! मी ${ownerName} यांचा एआय प्रतिनिधी बोलत आहे. ${ownerName} सध्या उपलब्ध नाहीत. मी आपल्याला कशी मदत करू शकेन, किंवा आपण काही निरोप सोडू इच्छिता का?`;
+  } else if (language === 'hi-IN') {
+    greeting = `नमस्ते! मैं ${ownerName} का एआई प्रतिनिधि बात कर रहा हूँ। ${ownerName} अभी उपलब्ध नहीं हैं। क्या मैं आपकी कोई मदद कर सकता हूँ, या आप कोई संदेश छोड़ना चाहेंगे?`;
+  }
+
   addTranscript({ call_id: callId, speaker: 'agent', text: greeting });
 
   res.json({
     callId,
-    greeting
+    greeting,
+    language
   });
 });
 

@@ -76,6 +76,9 @@ export function initDb() {
   if (!getSettingStmt.get('custom_instructions')) {
     setSettingStmt.run('custom_instructions', 'Be courteous, concise, and helpful. Ask for their name and phone number if not yet provided. If the topic is an urgent production emergency, reassure them that Smit is notified immediately.');
   }
+  if (!getSettingStmt.get('default_language')) {
+    setSettingStmt.run('default_language', 'auto');
+  }
 }
 
 // Calls & Transcripts Helper Methods

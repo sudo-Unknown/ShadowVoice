@@ -367,14 +367,19 @@ async function startSimulatedCall() {
   setWaveState('idle');
 
   try {
-    const res = await fetch('/api/simulator/start', { method: 'POST' });
+    const selectedLang = document.getElementById('sim-lang-select')?.value || 'auto';
+    const res = await fetch('/api/simulator/start', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ language: selectedLang })
+    });
     const data = await res.json();
     activeCallId = data.callId;
 
     // AI Greeting
     setDialogSubtitle('AI Representative', data.greeting);
     addTurnToFeed('agent', data.greeting);
-    await speakAloud(data.greeting);
+    await speakAloud(data.greeting, data.language || selectedLang);
 
     // Prompt user to speak
     startListening();
@@ -458,7 +463,26 @@ function startListening() {
     isListening = true;
     const micBtn = document.getElementById('btn-toggle-mic');
     micBtn?.classList.add('active');
-    setDialogSubtitle('You', 'Listening... (speak into microphone)');
+
+    const selectedLang = document.getElementById('sim-lang-select')?.value || 'auto';
+    if (selectedLang === 'mr-IN') {
+      recognition.lang = 'mr-IN';
+      setDialogSubtitle('You', 'ऐकत आहे... (मायक्रोफोनमध्ये बोला)');
+    } else if (selectedLang === 'hi-IN') {
+      recognition.lang = 'hi-IN';
+      setDialogSubtitle('You', 'सुन रहा हूँ... (माइक्रोफ़ोन में बोलिए)');
+    } else if (selectedLang === 'en-IN') {
+      recognition.lang = 'en-IN';
+      setDialogSubtitle('You', 'Listening... (speak into microphone)');
+    } else if (selectedLang === 'en-US') {
+      recognition.lang = 'en-US';
+      setDialogSubtitle('You', 'Listening... (speak into microphone)');
+    } else {
+      // Auto: set hi-IN which parses English, Hindi, and code-mixed speech gracefully in Chrome Web Speech
+      recognition.lang = 'hi-IN';
+      setDialogSubtitle('You', 'Listening... (Speak in English, हिन्दी, or मराठी)');
+    }
+
     setWaveState('listening');
     recognition.start();
   } catch (e) {
@@ -476,7 +500,7 @@ function stopListening() {
   if (!isSpeaking) setWaveState('idle');
 }
 
-function speakAloud(text) {
+function speakAloud(text, forcedLang = null) {
   return new Promise((resolve) => {
     if (!('speechSynthesis' in window)) {
       resolve();
@@ -485,13 +509,48 @@ function speakAloud(text) {
 
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = 1.0;
+    utterance.rate = 0.98;
     utterance.pitch = 1.0;
 
-    // Pick best English voice
     const voices = window.speechSynthesis.getVoices();
-    const naturalVoice = voices.find(v => v.lang.startsWith('en') && (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Samantha')));
-    if (naturalVoice) utterance.voice = naturalVoice;
+    const selectedLang = forcedLang || document.getElementById('sim-lang-select')?.value || 'auto';
+    const hasDevanagari = /[\u0900-\u097F]/.test(text);
+
+    let chosenVoice = null;
+    let targetLang = 'en-US';
+
+    if (hasDevanagari || selectedLang === 'mr-IN' || selectedLang === 'hi-IN') {
+      const isMarathi = selectedLang === 'mr-IN' || /आहे|नाही|नमस्कार|स्मित|कळवीन|सांगा|होय|दिवस|काही|तुमचा|माझा|बोलायचं|केल्याबद्दल/i.test(text);
+
+      if (isMarathi) {
+        targetLang = 'mr-IN';
+        // 1. Try dedicated Marathi voice
+        chosenVoice = voices.find(v => v.lang.startsWith('mr') || v.name.toLowerCase().includes('marathi'));
+        // 2. If browser lacks Marathi voice pack, fallback to Hindi voice which accurately pronounces Devanagari phonetics
+        if (!chosenVoice) {
+          chosenVoice = voices.find(v => v.lang.startsWith('hi') || v.name.toLowerCase().includes('hindi') || v.name.includes('Lekha') || v.name.includes('Kajal') || v.name.includes('Aditi'));
+        }
+      } else {
+        targetLang = 'hi-IN';
+        // Dedicated Hindi voice
+        chosenVoice = voices.find(v => v.lang.startsWith('hi') || v.name.toLowerCase().includes('hindi') || v.name.includes('Lekha') || v.name.includes('Kajal') || v.name.includes('Aditi'));
+      }
+    } else if (selectedLang === 'en-IN') {
+      targetLang = 'en-IN';
+      chosenVoice = voices.find(v => v.lang === 'en-IN' || v.name.includes('India') || v.name.includes('Ravi') || v.name.includes('Heera'));
+    }
+
+    // Default to natural English if no Indian/Devanagari voice selected
+    if (!chosenVoice) {
+      chosenVoice = voices.find(v => v.lang.startsWith('en') && (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Samantha')));
+    }
+
+    if (chosenVoice) {
+      utterance.voice = chosenVoice;
+      utterance.lang = chosenVoice.lang || targetLang;
+    } else {
+      utterance.lang = targetLang;
+    }
 
     setWaveState('speaking');
     isSpeaking = true;
@@ -576,6 +635,8 @@ async function loadSettings() {
     if (document.getElementById('set-owner-status')) document.getElementById('set-owner-status').value = s.owner_status || '';
     if (document.getElementById('set-owner-bio')) document.getElementById('set-owner-bio').value = s.owner_bio || '';
     if (document.getElementById('set-custom-instructions')) document.getElementById('set-custom-instructions').value = s.custom_instructions || '';
+    if (document.getElementById('set-default-lang') && s.default_language) document.getElementById('set-default-lang').value = s.default_language;
+    if (document.getElementById('sim-lang-select') && s.default_language) document.getElementById('sim-lang-select').value = s.default_language;
 
     // Update active caller title in simulator
     const simOwnerTitle = document.getElementById('sim-owner-title');
@@ -594,7 +655,8 @@ async function saveSettings() {
     owner_email: document.getElementById('set-owner-email')?.value.trim(),
     owner_status: document.getElementById('set-owner-status')?.value.trim(),
     owner_bio: document.getElementById('set-owner-bio')?.value.trim(),
-    custom_instructions: document.getElementById('set-custom-instructions')?.value.trim()
+    custom_instructions: document.getElementById('set-custom-instructions')?.value.trim(),
+    default_language: document.getElementById('set-default-lang')?.value || 'auto'
   };
 
   const statusMsg = document.getElementById('save-status-msg');

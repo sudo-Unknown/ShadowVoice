@@ -131,8 +131,17 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
               </div>
               <h3 class="sim-caller-name">Voice Call Simulator</h3>
-              <p class="sim-caller-subtitle">Talk with your AI Voicemail representative using your microphone</p>
-              
+              <div class="sim-language-selector" style="margin-bottom: 1.25rem; width: 100%; max-width: 260px;">
+                <label for="sim-lang-select" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); display: block; margin-bottom: 0.4rem; font-weight: 600;">Voice Language:</label>
+                <select id="sim-lang-select" style="width: 100%; padding: 0.6rem 0.8rem; background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.85rem; font-weight: 500; cursor: pointer; outline: none;">
+                  <option value="auto">🌐 Auto-Detect (EN / हिन्दी / मराठी)</option>
+                  <option value="mr-IN">🇮🇳 मराठी (Marathi Voice)</option>
+                  <option value="hi-IN">🇮🇳 हिन्दी (Hindi Voice)</option>
+                  <option value="en-IN">🇮🇳 Indian English Voice</option>
+                  <option value="en-US">🇺🇸 US English Voice</option>
+                </select>
+              </div>
+
               <div class="sim-start-actions">
                 <button class="btn-call-start" id="btn-start-call">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
@@ -214,6 +223,17 @@
             <div class="form-group">
               <label for="set-owner-email">Contact Email</label>
               <input type="email" id="set-owner-email" placeholder="e.g. smit@example.com">
+            </div>
+
+            <div class="form-group">
+              <label for="set-default-lang">Default Language / Tone</label>
+              <select id="set-default-lang" style="width: 100%; padding: 0.65rem 0.85rem; background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.9rem;">
+                <option value="auto">🌐 Multilingual (Auto-Detect English / Hindi / Marathi)</option>
+                <option value="mr-IN">🇮🇳 मराठी (Marathi Default)</option>
+                <option value="hi-IN">🇮🇳 हिन्दी (Hindi Default)</option>
+                <option value="en-IN">🇮🇳 Indian English Default</option>
+                <option value="en-US">🇺🇸 US English Default</option>
+              </select>
             </div>
           </div>
 
