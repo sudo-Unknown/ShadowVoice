@@ -57,7 +57,8 @@ jobs:
             This APK was automatically compiled by GitHub Actions from commit `${{ github.sha }}`.
             
             ### ✨ Features Included:
-            * **📞 Cellular Phone Call Screener**: Intercepts phone calls, screens with AI in **मराठी**, **हिन्दी**, and **English**, and streams live transcripts.
+            * **🍏 Apple-Style Live Voicemail**: No default dialer required! Keep your normal Samsung/Google Phone app. If a call is unanswered after 18s, AI automatically answers, speaks your greeting in **मराठी**, **हिन्दी**, or **English**, and records a live voicemail.
+            * **📞 Cellular Phone Call Screener**: Intercepts phone calls, screens with AI, and streams real-time transcripts.
             * **🎙️ Take Over Call**: Instantly silence AI and speak directly with callers.
             * **📬 Voicemail Inbox**: View all voicemails, summaries, urgency badges, and action items.
             * **🖥️ VPS & Docker Infrastructure Monitor**: Real-time host CPU, RAM, Disk, Uptime, and 38+ containers status.

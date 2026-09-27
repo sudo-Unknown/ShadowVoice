@@ -85,15 +85,20 @@
             </intent-filter>
         </service>
 
-        <!-- Call Screening Service: Identifies incoming calls -->
+        <!-- Apple-Style Live Voicemail Background Service (No Default Dialer Required) -->
         <service
-            android:name=".service.ShadowCallScreeningService"
-            android:permission="android.permission.BIND_SCREENING_SERVICE"
+            android:name=".service.AutoVoicemailService"
+            android:foregroundServiceType="phoneCall"
+            android:exported="false" />
+
+        <!-- BroadcastReceiver: Intercepts incoming rings when using default phone app -->
+        <receiver
+            android:name=".receiver.CallStateReceiver"
             android:exported="true">
             <intent-filter>
-                <action android:name="android.telecom.CallScreeningService" />
+                <action android:name="android.intent.action.PHONE_STATE" />
             </intent-filter>
-        </service>
+        </receiver>
 
     </application>
 

@@ -1,11 +1,22 @@
 package dev.smitronix.shadowvoice.ui
 
+import android.Manifest
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.Context
+import android.content.pm.PackageManager
+import android.media.AudioManager
+import android.os.Build
 import android.os.Bundle
+import android.telecom.TelecomManager
 import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import dev.smitronix.shadowvoice.R
 import dev.smitronix.shadowvoice.ai.ShadowVoiceApiClient
@@ -19,8 +30,9 @@ class CallScreenActivity : AppCompatActivity() {
     private lateinit var speechManager: SpeechManager
 
     private var activeCallId: String? = null
-    private var callerNumber: String = "Unknown"
+    private var callerNumber: String = "Unknown Caller"
     private var selectedLanguage: String = "auto"
+    private var isAutoScreened: Boolean = false
 
     private lateinit var tvCallerInfo: TextView
     private lateinit var tvStatus: TextView
@@ -35,6 +47,8 @@ class CallScreenActivity : AppCompatActivity() {
         setContentView(R.layout.activity_call_screen)
 
         callerNumber = intent.getStringExtra("CALLER_NUMBER") ?: "Unknown Caller"
+        isAutoScreened = intent.getBooleanExtra("AUTO_SCREEN", false)
+
         val prefs = getSharedPreferences("shadow_voice_prefs", MODE_PRIVATE)
         val serverUrl = prefs.getString("server_url", "https://call.smitronix.dev") ?: "https://call.smitronix.dev"
         selectedLanguage = prefs.getString("voice_language", "auto") ?: "auto"
@@ -50,7 +64,7 @@ class CallScreenActivity : AppCompatActivity() {
         btnTakeOver = findViewById(R.id.btn_take_over)
 
         tvCallerInfo.text = callerNumber
-        tvStatus.text = "Incoming Call..."
+        tvStatus.text = if (isAutoScreened) "🍏 Apple-Style Live Voicemail Active..." else "Incoming Call..."
 
         speechManager = SpeechManager(
             context = this,
@@ -70,28 +84,32 @@ class CallScreenActivity : AppCompatActivity() {
 
         btnAnswerPersonal.setOnClickListener {
             speechManager.destroy()
-            ShadowInCallService.answerCall()
+            performAnswer()
             finish()
         }
 
         btnDecline.setOnClickListener {
             speechManager.destroy()
-            ShadowInCallService.disconnectCall()
+            performDisconnect()
             finish()
         }
 
         btnTakeOver.setOnClickListener {
             speechManager.stopListening()
-            tvStatus.text = "Call Taken Over"
+            tvStatus.text = "Call Taken Over (Live)"
             btnTakeOver.visibility = View.GONE
             appendTranscript("System", "You took over the call.")
+        }
+
+        // If launched via Auto-Voicemail timer, begin screening immediately
+        if (isAutoScreened) {
+            startAiScreening()
         }
     }
 
     private fun startAiScreening() {
-        ShadowInCallService.isScreeningActive = true
-        ShadowInCallService.answerCall()
-        ShadowInCallService.setSpeakerphone(this, true)
+        performAnswer()
+        enableSpeakerphone()
 
         btnScreenAi.visibility = View.GONE
         btnAnswerPersonal.visibility = View.GONE
@@ -126,7 +144,8 @@ class CallScreenActivity : AppCompatActivity() {
                 speechManager.speak(turn.replyText) {
                     if (turn.isCallEnd) {
                         tvStatus.text = "Call finished. Voicemail saved!"
-                        ShadowInCallService.disconnectCall()
+                        postVoicemailNotification(callerNumber, turn.replyText)
+                        performDisconnect()
                         finish()
                     } else {
                         tvStatus.text = "Listening to caller..."
@@ -136,6 +155,70 @@ class CallScreenActivity : AppCompatActivity() {
             }.onFailure { e ->
                 tvStatus.text = "Failed to generate reply: ${e.message}"
             }
+        }
+    }
+
+    private fun performAnswer() {
+        if (ShadowInCallService.currentCall != null) {
+            ShadowInCallService.answerCall()
+        } else {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val telecom = getSystemService(TelecomManager::class.java)
+                if (ContextCompat.checkSelfPermission(this, Manifest.permission.ANSWER_PHONE_CALLS) == PackageManager.PERMISSION_GRANTED) {
+                    try {
+                        telecom?.acceptRingingCall()
+                        Log.d("CallScreen", "Accepted ringing call via TelecomManager")
+                    } catch (e: Exception) {
+                        Log.e("CallScreen", "Error in acceptRingingCall: ${e.message}")
+                    }
+                }
+            }
+        }
+    }
+
+    private fun performDisconnect() {
+        if (ShadowInCallService.currentCall != null) {
+            ShadowInCallService.disconnectCall()
+        } else {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                val telecom = getSystemService(TelecomManager::class.java)
+                if (ContextCompat.checkSelfPermission(this, Manifest.permission.ANSWER_PHONE_CALLS) == PackageManager.PERMISSION_GRANTED) {
+                    try {
+                        telecom?.endCall()
+                        Log.d("CallScreen", "Ended call via TelecomManager")
+                    } catch (e: Exception) {
+                        Log.e("CallScreen", "Error in endCall: ${e.message}")
+                    }
+                }
+            }
+        }
+    }
+
+    private fun enableSpeakerphone() {
+        val audioManager = getSystemService(Context.AUDIO_SERVICE) as? AudioManager
+        audioManager?.mode = AudioManager.MODE_IN_COMMUNICATION
+        audioManager?.isSpeakerphoneOn = true
+    }
+
+    private fun postVoicemailNotification(number: String, summary: String) {
+        val channelId = "shadowvoice_voicemail_alerts"
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(channelId, "Voicemail Alerts", NotificationManager.IMPORTANCE_HIGH)
+            val manager = getSystemService(NotificationManager::class.java)
+            manager?.createNotificationChannel(channel)
+        }
+
+        val notification = NotificationCompat.Builder(this, channelId)
+            .setSmallIcon(R.drawable.ic_launcher)
+            .setContentTitle("📬 New Voicemail from $number")
+            .setContentText(summary)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(summary))
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .build()
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
+            NotificationManagerCompat.from(this).notify(System.currentTimeMillis().toInt(), notification)
         }
     }
 

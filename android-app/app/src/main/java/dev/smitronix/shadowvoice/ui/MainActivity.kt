@@ -62,6 +62,19 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvStatusBattery: TextView
     private lateinit var btnReqBattery: Button
 
+    // Live Voicemail Views
+    private lateinit var swLiveVoicemail: androidx.appcompat.widget.SwitchCompat
+    private lateinit var spinnerRingTimeout: Spinner
+    private val timeoutValues = listOf(10, 15, 18, 20, 25, 30)
+    private val timeoutLabels = listOf(
+        "10s (Quick answer)",
+        "15s (Standard)",
+        "18s (Recommended)",
+        "20s",
+        "25s",
+        "30s (Long ring)"
+    )
+
     // Voicemails Views
     private lateinit var tvVoicemailStats: TextView
     private lateinit var containerVoicemails: LinearLayout
@@ -212,6 +225,12 @@ class MainActivity : AppCompatActivity() {
         spinnerLanguage = findViewById(R.id.spinner_language)
         btnSaveConfig = findViewById(R.id.btn_save_config)
 
+        // Live Voicemail Views
+        swLiveVoicemail = findViewById(R.id.sw_live_voicemail)
+        spinnerRingTimeout = findViewById(R.id.spinner_ring_timeout)
+        val timeoutAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, timeoutLabels)
+        spinnerRingTimeout.adapter = timeoutAdapter
+
         val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, languageLabels)
         spinnerLanguage.adapter = adapter
     }
@@ -282,14 +301,33 @@ class MainActivity : AppCompatActivity() {
         chipQueryVoicemails.setOnClickListener { sendCopilotMessage("Who called me today and what are the voicemails?") }
         chipQueryMarathi.setOnClickListener { sendCopilotMessage("सध्या सर्व्हर आणि कंटेनर्सचे काय स्टेटस आहे?") }
 
+        // Live Voicemail Listeners
+        swLiveVoicemail.setOnCheckedChangeListener { _, isChecked ->
+            val prefs = getSharedPreferences("shadow_voice_prefs", MODE_PRIVATE)
+            prefs.edit().putBoolean("auto_voicemail_enabled", isChecked).apply()
+            val msg = if (isChecked) "🍏 Live Voicemail Activated!" else "Live Voicemail Deactivated"
+            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+        }
+
+        spinnerRingTimeout.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                if (position in timeoutValues.indices) {
+                    val delay = timeoutValues[position]
+                    val prefs = getSharedPreferences("shadow_voice_prefs", MODE_PRIVATE)
+                    prefs.edit().putInt("auto_answer_delay_seconds", delay).apply()
+                }
+            }
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
+        }
+
         btnSaveConfig.setOnClickListener { savePreferences() }
     }
 
     private fun updatePermissionIndicators() {
-        // 1. Default Dialer
+        // 1. Default Dialer (Optional for Live Voicemail)
         val hasDialer = isDefaultDialer()
-        tvStatusDialer.text = if (hasDialer) "🟢 Active: Default Screener" else "⚪ Not Set (Tap 'Set Default')"
-        tvStatusDialer.setTextColor(if (hasDialer) Color.parseColor("#10B981") else Color.parseColor("#FBBF24"))
+        tvStatusDialer.text = if (hasDialer) "🟢 Active: Default Screener" else "⚪ Optional: Live Voicemail active"
+        tvStatusDialer.setTextColor(if (hasDialer) Color.parseColor("#10B981") else Color.parseColor("#94A3B8"))
         btnSetDefaultDialer.text = if (hasDialer) "Active" else "Set Default"
         btnSetDefaultDialer.isEnabled = !hasDialer
 
@@ -323,14 +361,14 @@ class MainActivity : AppCompatActivity() {
         btnReqBattery.text = if (isIgnoringBattery) "Whitelisted" else "Whitelist"
         btnReqBattery.isEnabled = !isIgnoringBattery
 
-        // Master button state
-        val allGranted = hasDialer && hasNotif && hasAudio && hasPhone && isIgnoringBattery
-        if (allGranted) {
-            btnGrantAllPermissions.text = "✅ All System Permissions Configured!"
+        // Master button state: Essential for Live Voicemail
+        val essentialGranted = hasNotif && hasAudio && hasPhone && isIgnoringBattery
+        if (essentialGranted) {
+            btnGrantAllPermissions.text = "✅ Apple-Style Live Voicemail is Ready!"
             btnGrantAllPermissions.setBackgroundColor(Color.parseColor("#334155"))
             btnGrantAllPermissions.isEnabled = false
         } else {
-            btnGrantAllPermissions.text = "⚡ 1-Tap: Grant All Essential Permissions"
+            btnGrantAllPermissions.text = "⚡ 1-Tap: Grant Essential Permissions"
             btnGrantAllPermissions.setBackgroundColor(Color.parseColor("#10B981"))
             btnGrantAllPermissions.isEnabled = true
         }
@@ -367,11 +405,6 @@ class MainActivity : AppCompatActivity() {
 
         if (permissions.isNotEmpty()) {
             permissionLauncher.launch(permissions.toTypedArray())
-        }
-
-        // Trigger default dialer role request if not already granted
-        if (!isDefaultDialer()) {
-            requestDefaultDialerRole()
         }
 
         // Prompt battery optimization if needed
@@ -758,10 +791,16 @@ class MainActivity : AppCompatActivity() {
         val prefs = getSharedPreferences("shadow_voice_prefs", MODE_PRIVATE)
         val serverUrl = prefs.getString("server_url", "https://call.smitronix.dev") ?: "https://call.smitronix.dev"
         val lang = prefs.getString("voice_language", "auto") ?: "auto"
+        val autoVoicemail = prefs.getBoolean("auto_voicemail_enabled", true)
+        val delay = prefs.getInt("auto_answer_delay_seconds", 18)
 
         etServerUrl.setText(serverUrl)
         val idx = languages.indexOf(lang)
         if (idx >= 0) spinnerLanguage.setSelection(idx)
+
+        swLiveVoicemail.isChecked = autoVoicemail
+        val delayIdx = timeoutValues.indexOf(delay)
+        if (delayIdx >= 0) spinnerRingTimeout.setSelection(delayIdx)
 
         apiClient = ShadowVoiceApiClient(serverUrl)
         speechManager?.currentLanguageCode = lang
@@ -771,10 +810,14 @@ class MainActivity : AppCompatActivity() {
         val serverUrl = etServerUrl.text.toString().trim()
         val langIdx = spinnerLanguage.selectedItemPosition
         val langCode = if (langIdx in languages.indices) languages[langIdx] else "auto"
+        val delayIdx = spinnerRingTimeout.selectedItemPosition
+        val delay = if (delayIdx in timeoutValues.indices) timeoutValues[delayIdx] else 18
 
         getSharedPreferences("shadow_voice_prefs", MODE_PRIVATE).edit()
             .putString("server_url", serverUrl)
             .putString("voice_language", langCode)
+            .putBoolean("auto_voicemail_enabled", swLiveVoicemail.isChecked)
+            .putInt("auto_answer_delay_seconds", delay)
             .apply()
 
         apiClient.baseUrl = serverUrl
