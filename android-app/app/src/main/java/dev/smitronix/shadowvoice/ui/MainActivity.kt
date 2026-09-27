@@ -1,16 +1,25 @@
 package dev.smitronix.shadowvoice.ui
 
+import android.Manifest
 import android.app.role.RoleManager
+import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Color
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.PowerManager
+import android.provider.Settings
 import android.telecom.TelecomManager
 import android.view.Gravity
 import android.view.View
 import android.widget.*
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import dev.smitronix.shadowvoice.R
 import dev.smitronix.shadowvoice.ai.ShadowVoiceApiClient
@@ -40,8 +49,20 @@ class MainActivity : AppCompatActivity() {
     private lateinit var viewCopilot: View
     private lateinit var viewSettings: View
 
-    // Calls Tab Views
+    // Permissions & Setup Views
+    private lateinit var btnGrantAllPermissions: Button
+    private lateinit var tvStatusDialer: TextView
     private lateinit var btnSetDefaultDialer: Button
+    private lateinit var tvStatusNotif: TextView
+    private lateinit var btnReqNotif: Button
+    private lateinit var tvStatusAudio: TextView
+    private lateinit var btnReqAudio: Button
+    private lateinit var tvStatusPhone: TextView
+    private lateinit var btnReqPhone: Button
+    private lateinit var tvStatusBattery: TextView
+    private lateinit var btnReqBattery: Button
+
+    // Voicemails Views
     private lateinit var tvVoicemailStats: TextView
     private lateinit var containerVoicemails: LinearLayout
     private lateinit var tvEmptyVoicemails: TextView
@@ -85,17 +106,53 @@ class MainActivity : AppCompatActivity() {
         "🇺🇸 English (US)"
     )
 
+    // Activity Result Launchers
+    private lateinit var permissionLauncher: ActivityResultLauncher<Array<String>>
+    private lateinit var roleLauncher: ActivityResultLauncher<Intent>
+    private lateinit var batteryLauncher: ActivityResultLauncher<Intent>
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        initLaunchers()
         initViews()
         setupListeners()
         loadPreferences()
 
         initSpeech()
         switchTab("calls")
+        updatePermissionIndicators()
         refreshAllData()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        updatePermissionIndicators()
+    }
+
+    private fun initLaunchers() {
+        permissionLauncher = registerForActivityResult(
+            ActivityResultContracts.RequestMultiplePermissions()
+        ) { _ ->
+            updatePermissionIndicators()
+            Toast.makeText(this, "Permissions updated!", Toast.LENGTH_SHORT).show()
+        }
+
+        roleLauncher = registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) { _ ->
+            updatePermissionIndicators()
+            val isDefault = isDefaultDialer()
+            val msg = if (isDefault) "ShadowVoice is now your Default Phone Screener!" else "Default phone app was not set."
+            Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
+        }
+
+        batteryLauncher = registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) { _ ->
+            updatePermissionIndicators()
+        }
     }
 
     private fun initViews() {
@@ -112,7 +169,19 @@ class MainActivity : AppCompatActivity() {
         viewCopilot = findViewById(R.id.view_copilot)
         viewSettings = findViewById(R.id.view_settings)
 
+        // Permission Views
+        btnGrantAllPermissions = findViewById(R.id.btn_grant_all_permissions)
+        tvStatusDialer = findViewById(R.id.tv_status_dialer)
         btnSetDefaultDialer = findViewById(R.id.btn_set_default_dialer)
+        tvStatusNotif = findViewById(R.id.tv_status_notif)
+        btnReqNotif = findViewById(R.id.btn_req_notif)
+        tvStatusAudio = findViewById(R.id.tv_status_audio)
+        btnReqAudio = findViewById(R.id.btn_req_audio)
+        tvStatusPhone = findViewById(R.id.tv_status_phone)
+        btnReqPhone = findViewById(R.id.btn_req_phone)
+        tvStatusBattery = findViewById(R.id.tv_status_battery)
+        btnReqBattery = findViewById(R.id.btn_req_battery)
+
         tvVoicemailStats = findViewById(R.id.tv_voicemail_stats)
         containerVoicemails = findViewById(R.id.container_voicemails)
         tvEmptyVoicemails = findViewById(R.id.tv_empty_voicemails)
@@ -155,7 +224,36 @@ class MainActivity : AppCompatActivity() {
 
         btnRefreshAll.setOnClickListener { refreshAllData() }
 
-        btnSetDefaultDialer.setOnClickListener { requestDefaultDialerRole() }
+        // Permission Handlers
+        btnGrantAllPermissions.setOnClickListener {
+            requestAllEssentialPermissions()
+        }
+
+        btnSetDefaultDialer.setOnClickListener {
+            requestDefaultDialerRole()
+        }
+
+        btnReqNotif.setOnClickListener {
+            requestNotificationPermission()
+        }
+
+        btnReqAudio.setOnClickListener {
+            permissionLauncher.launch(arrayOf(Manifest.permission.RECORD_AUDIO))
+        }
+
+        btnReqPhone.setOnClickListener {
+            val permissions = mutableListOf(
+                Manifest.permission.READ_PHONE_STATE,
+                Manifest.permission.ANSWER_PHONE_CALLS,
+                Manifest.permission.READ_CALL_LOG,
+                Manifest.permission.READ_CONTACTS
+            )
+            permissionLauncher.launch(permissions.toTypedArray())
+        }
+
+        btnReqBattery.setOnClickListener {
+            requestBatteryOptimizationExemption()
+        }
 
         btnLaunchCoolify.setOnClickListener {
             val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://coolify.smitronix.dev"))
@@ -185,6 +283,168 @@ class MainActivity : AppCompatActivity() {
         chipQueryMarathi.setOnClickListener { sendCopilotMessage("सध्या सर्व्हर आणि कंटेनर्सचे काय स्टेटस आहे?") }
 
         btnSaveConfig.setOnClickListener { savePreferences() }
+    }
+
+    private fun updatePermissionIndicators() {
+        // 1. Default Dialer
+        val hasDialer = isDefaultDialer()
+        tvStatusDialer.text = if (hasDialer) "🟢 Active: Default Screener" else "⚪ Not Set (Tap 'Set Default')"
+        tvStatusDialer.setTextColor(if (hasDialer) Color.parseColor("#10B981") else Color.parseColor("#FBBF24"))
+        btnSetDefaultDialer.text = if (hasDialer) "Active" else "Set Default"
+        btnSetDefaultDialer.isEnabled = !hasDialer
+
+        // 2. Notifications
+        val hasNotif = NotificationManagerCompat.from(this).areNotificationsEnabled()
+        tvStatusNotif.text = if (hasNotif) "🟢 Active: Alerts Enabled" else "⚪ Disabled (Tap 'Enable')"
+        tvStatusNotif.setTextColor(if (hasNotif) Color.parseColor("#10B981") else Color.parseColor("#FBBF24"))
+        btnReqNotif.text = if (hasNotif) "Enabled" else "Enable"
+        btnReqNotif.isEnabled = !hasNotif
+
+        // 3. Audio / Mic
+        val hasAudio = ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+        tvStatusAudio.text = if (hasAudio) "🟢 Active: Microphone Ready" else "⚪ Required for AI speech"
+        tvStatusAudio.setTextColor(if (hasAudio) Color.parseColor("#10B981") else Color.parseColor("#FBBF24"))
+        btnReqAudio.text = if (hasAudio) "Granted" else "Grant"
+        btnReqAudio.isEnabled = !hasAudio
+
+        // 4. Phone State & Contacts
+        val hasPhone = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED &&
+                       ContextCompat.checkSelfPermission(this, Manifest.permission.ANSWER_PHONE_CALLS) == PackageManager.PERMISSION_GRANTED
+        tvStatusPhone.text = if (hasPhone) "🟢 Active: SIM Calls Connected" else "⚪ Required to answer calls"
+        tvStatusPhone.setTextColor(if (hasPhone) Color.parseColor("#10B981") else Color.parseColor("#FBBF24"))
+        btnReqPhone.text = if (hasPhone) "Granted" else "Grant"
+        btnReqPhone.isEnabled = !hasPhone
+
+        // 5. Battery Optimization
+        val pm = getSystemService(Context.POWER_SERVICE) as? PowerManager
+        val isIgnoringBattery = pm?.isIgnoringBatteryOptimizations(packageName) ?: false
+        tvStatusBattery.text = if (isIgnoringBattery) "🟢 Active: Unrestricted" else "⚪ Standard (Recommend whitelist)"
+        tvStatusBattery.setTextColor(if (isIgnoringBattery) Color.parseColor("#10B981") else Color.parseColor("#FBBF24"))
+        btnReqBattery.text = if (isIgnoringBattery) "Whitelisted" else "Whitelist"
+        btnReqBattery.isEnabled = !isIgnoringBattery
+
+        // Master button state
+        val allGranted = hasDialer && hasNotif && hasAudio && hasPhone && isIgnoringBattery
+        if (allGranted) {
+            btnGrantAllPermissions.text = "✅ All System Permissions Configured!"
+            btnGrantAllPermissions.setBackgroundColor(Color.parseColor("#334155"))
+            btnGrantAllPermissions.isEnabled = false
+        } else {
+            btnGrantAllPermissions.text = "⚡ 1-Tap: Grant All Essential Permissions"
+            btnGrantAllPermissions.setBackgroundColor(Color.parseColor("#10B981"))
+            btnGrantAllPermissions.isEnabled = true
+        }
+    }
+
+    private fun isDefaultDialer(): Boolean {
+        val telecomManager = getSystemService(Context.TELECOM_SERVICE) as? TelecomManager
+        return telecomManager?.defaultDialerPackage == packageName
+    }
+
+    private fun requestAllEssentialPermissions() {
+        val permissions = mutableListOf<String>()
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                permissions.add(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            permissions.add(Manifest.permission.RECORD_AUDIO)
+        }
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
+            permissions.add(Manifest.permission.READ_PHONE_STATE)
+        }
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ANSWER_PHONE_CALLS) != PackageManager.PERMISSION_GRANTED) {
+            permissions.add(Manifest.permission.ANSWER_PHONE_CALLS)
+        }
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CALL_LOG) != PackageManager.PERMISSION_GRANTED) {
+            permissions.add(Manifest.permission.READ_CALL_LOG)
+        }
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
+            permissions.add(Manifest.permission.READ_CONTACTS)
+        }
+
+        if (permissions.isNotEmpty()) {
+            permissionLauncher.launch(permissions.toTypedArray())
+        }
+
+        // Trigger default dialer role request if not already granted
+        if (!isDefaultDialer()) {
+            requestDefaultDialerRole()
+        }
+
+        // Prompt battery optimization if needed
+        requestBatteryOptimizationExemption()
+    }
+
+    private fun requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            permissionLauncher.launch(arrayOf(Manifest.permission.POST_NOTIFICATIONS))
+        } else {
+            // Open system notification settings for this app
+            val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+            }
+            startActivity(intent)
+        }
+    }
+
+    private fun requestDefaultDialerRole() {
+        // Method 1: Android Q+ RoleManager
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val roleManager = getSystemService(RoleManager::class.java)
+            if (roleManager != null && roleManager.isRoleAvailable(RoleManager.ROLE_DIALER)) {
+                try {
+                    val intent = roleManager.createRequestRoleIntent(RoleManager.ROLE_DIALER)
+                    roleLauncher.launch(intent)
+                    return
+                } catch (e: Exception) {
+                    // Fallback to call screening or direct dialer intent
+                }
+            }
+
+            // Fallback to ROLE_CALL_SCREENING
+            if (roleManager != null && roleManager.isRoleAvailable(RoleManager.ROLE_CALL_SCREENING)) {
+                try {
+                    val intent = roleManager.createRequestRoleIntent(RoleManager.ROLE_CALL_SCREENING)
+                    roleLauncher.launch(intent)
+                    return
+                } catch (e: Exception) {}
+            }
+        }
+
+        // Method 2: Standard TelecomManager change dialer intent
+        try {
+            val intent = Intent(TelecomManager.ACTION_CHANGE_DEFAULT_DIALER).apply {
+                putExtra(TelecomManager.EXTRA_CHANGE_DEFAULT_DIALER_PACKAGE_NAME, packageName)
+            }
+            roleLauncher.launch(intent)
+        } catch (e: Exception) {
+            // Method 3: Direct application details settings
+            Toast.makeText(this, "Opening App Settings: Please set ShadowVoice as Default Phone App", Toast.LENGTH_LONG).show()
+            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                data = Uri.fromParts("package", packageName, null)
+            }
+            startActivity(intent)
+        }
+    }
+
+    private fun requestBatteryOptimizationExemption() {
+        val pm = getSystemService(Context.POWER_SERVICE) as? PowerManager
+        if (pm != null && !pm.isIgnoringBatteryOptimizations(packageName)) {
+            try {
+                val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                    data = Uri.parse("package:$packageName")
+                }
+                batteryLauncher.launch(intent)
+            } catch (e: Exception) {
+                try {
+                    val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+                    startActivity(intent)
+                } catch (e2: Exception) {}
+            }
+        }
     }
 
     private fun initSpeech() {
@@ -226,10 +486,13 @@ class MainActivity : AppCompatActivity() {
         viewSystemMonitor.visibility = if (tab == "system") View.VISIBLE else View.GONE
         viewCopilot.visibility = if (tab == "copilot") View.VISIBLE else View.GONE
         viewSettings.visibility = if (tab == "settings") View.VISIBLE else View.GONE
+
+        updatePermissionIndicators()
     }
 
     private fun refreshAllData() {
         tvTopStatus.text = "🔄 Refreshing telemetry & voicemails..."
+        updatePermissionIndicators()
         lifecycleScope.launch {
             loadVoicemails()
             loadSystemTelemetry()
@@ -488,21 +751,6 @@ class MainActivity : AppCompatActivity() {
 
         scrollCopilot.post {
             scrollCopilot.fullScroll(View.FOCUS_DOWN)
-        }
-    }
-
-    private fun requestDefaultDialerRole() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            val roleManager = getSystemService(RoleManager::class.java)
-            if (roleManager != null && roleManager.isRoleAvailable(RoleManager.ROLE_DIALER)) {
-                val intent = roleManager.createRequestRoleIntent(RoleManager.ROLE_DIALER)
-                startActivity(intent)
-            }
-        } else {
-            val intent = Intent(TelecomManager.ACTION_CHANGE_DEFAULT_DIALER).apply {
-                putExtra(TelecomManager.EXTRA_CHANGE_DEFAULT_DIALER_PACKAGE_NAME, packageName)
-            }
-            startActivity(intent)
         }
     }
 

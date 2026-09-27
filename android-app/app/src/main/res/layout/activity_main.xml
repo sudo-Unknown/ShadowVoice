@@ -125,6 +125,7 @@
                 android:orientation="vertical">
 
                 <!-- Phone Integration Card -->
+                <!-- Permissions & Phone Integration Card -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -135,28 +136,235 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="📱 Cellular Phone Call Screener"
+                        android:text="🔒 Permissions &amp; System Integration"
                         android:textColor="#FFFFFF"
-                        android:textSize="16sp"
+                        android:textSize="17sp"
                         android:textStyle="bold" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:text="Answers incoming cellular SIM calls with ShadowVoice AI in Marathi, Hindi, or English."
+                        android:text="Grant these permissions so ShadowVoice can intercept incoming cellular calls, speak with callers, and notify you."
                         android:textColor="#94A3B8"
                         android:textSize="13sp" />
 
+                    <!-- Master 1-Tap Setup Button -->
                     <Button
-                        android:id="@+id/btn_set_default_dialer"
+                        android:id="@+id/btn_grant_all_permissions"
                         android:layout_width="match_parent"
-                        android:layout_height="46dp"
+                        android:layout_height="48dp"
                         android:layout_marginTop="12dp"
                         android:backgroundTint="#10B981"
-                        android:text="🛡️ Set as Default Phone Screener"
+                        android:text="⚡ 1-Tap: Grant All Essential Permissions"
                         android:textColor="#FFFFFF"
                         android:textStyle="bold" />
+
+                    <!-- Item 1: Default Dialer / Screener Role -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="🛡️ Default Phone Screener"
+                                android:textColor="#F1F5F9"
+                                android:textSize="14sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/tv_status_dialer"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Checking status..."
+                                android:textColor="#FBBF24"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+
+                        <Button
+                            android:id="@+id/btn_set_default_dialer"
+                            android:layout_width="wrap_content"
+                            android:layout_height="38dp"
+                            android:backgroundTint="#6366F1"
+                            android:text="Set Default"
+                            android:textColor="#FFFFFF"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+
+                    <!-- Item 2: Notifications -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="🔔 Notifications"
+                                android:textColor="#F1F5F9"
+                                android:textSize="14sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/tv_status_notif"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Checking status..."
+                                android:textColor="#FBBF24"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+
+                        <Button
+                            android:id="@+id/btn_req_notif"
+                            android:layout_width="wrap_content"
+                            android:layout_height="38dp"
+                            android:backgroundTint="#334155"
+                            android:text="Enable"
+                            android:textColor="#FFFFFF"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+
+                    <!-- Item 3: Microphone -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="🎙️ Microphone &amp; Audio"
+                                android:textColor="#F1F5F9"
+                                android:textSize="14sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/tv_status_audio"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Checking status..."
+                                android:textColor="#FBBF24"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+
+                        <Button
+                            android:id="@+id/btn_req_audio"
+                            android:layout_width="wrap_content"
+                            android:layout_height="38dp"
+                            android:backgroundTint="#334155"
+                            android:text="Grant"
+                            android:textColor="#FFFFFF"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+
+                    <!-- Item 4: Phone & Contacts -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="📞 Phone State &amp; Contacts"
+                                android:textColor="#F1F5F9"
+                                android:textSize="14sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/tv_status_phone"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Checking status..."
+                                android:textColor="#FBBF24"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+
+                        <Button
+                            android:id="@+id/btn_req_phone"
+                            android:layout_width="wrap_content"
+                            android:layout_height="38dp"
+                            android:backgroundTint="#334155"
+                            android:text="Grant"
+                            android:textColor="#FFFFFF"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+
+                    <!-- Item 5: Battery Optimization -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="🔋 Background Resilience"
+                                android:textColor="#F1F5F9"
+                                android:textSize="14sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/tv_status_battery"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Checking status..."
+                                android:textColor="#FBBF24"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+
+                        <Button
+                            android:id="@+id/btn_req_battery"
+                            android:layout_width="wrap_content"
+                            android:layout_height="38dp"
+                            android:backgroundTint="#334155"
+                            android:text="Whitelist"
+                            android:textColor="#FFFFFF"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+
                 </LinearLayout>
 
                 <!-- Voicemail Inbox Header -->
