@@ -363,6 +363,8 @@
                             android:text="Whitelist"
                             android:textColor="#FFFFFF"
                             android:textSize="12sp" />
+                    </LinearLayout>
+
                 </LinearLayout>
 
                 <!-- Apple-Style Live Voicemail Card (No Default Dialer Required) -->
