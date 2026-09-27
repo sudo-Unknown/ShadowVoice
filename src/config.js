@@ -9,7 +9,7 @@ const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
 export const config = {
-  port: parseInt(process.env.PORT || '3000', 10),
+  port: parseInt(process.env.PORT || '3050', 10),
   owner: {
     name: process.env.OWNER_NAME || 'Smit',
     role: process.env.OWNER_ROLE || 'Software Engineer & Builder',
@@ -38,5 +38,5 @@ export const config = {
     telegramBotToken: process.env.TELEGRAM_BOT_TOKEN || '',
     telegramChatId: process.env.TELEGRAM_CHAT_ID || ''
   },
-  dbPath: path.join(__dirname, '..', 'data', 'voicemail.sqlite')
+  dbPath: process.env.DB_PATH || path.join(__dirname, '..', 'data', 'voicemail.sqlite')
 };

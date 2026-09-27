@@ -1,0 +1,46 @@
+version: '3.8'
+
+# Stack containing both AI Voicemail Agent and a self-hosted Ollama instance
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: voicemail-ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_models:/root/.ollama
+
+  voicemail-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ai-voicemail-agent
+    restart: unless-stopped
+    depends_on:
+      - ollama
+    ports:
+      - "3050:3050"
+    environment:
+      - PORT=3050
+      - OWNER_NAME=${OWNER_NAME:-Smit}
+      - OWNER_ROLE=${OWNER_ROLE:-Software Engineer & Builder}
+      - OWNER_STATUS=${OWNER_STATUS:-Currently busy. Available after 5:00 PM for urgent matters.}
+      - OWNER_BIO=${OWNER_BIO:-Specializes in AI systems, full-stack software development, cybersecurity, and cloud automation.}
+      - LLM_PROVIDER=ollama
+      - OLLAMA_URL=http://ollama:11434
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-cyber-coder:fast}
+      - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID:-}
+      - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN:-}
+      - TWILIO_PHONE_NUMBER=${TWILIO_PHONE_NUMBER:-}
+      - TWILIO_VOICE=${TWILIO_VOICE:-Polly.Matthew-Neural}
+      - TWILIO_LANGUAGE=${TWILIO_LANGUAGE:-en-US}
+      - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL:-}
+    volumes:
+      - voicemail_data:/app/data
+
+volumes:
+  voicemail_data:
+    name: voicemail_data
+  ollama_models:
+    name: voicemail_ollama_models
