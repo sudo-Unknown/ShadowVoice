@@ -23,18 +23,15 @@ This guide provides end-to-end instructions for self-hosting **ShadowVoice (AI V
 
 ### Method 1: Deploy from Git (Recommended)
 
-1. **Push your project to GitHub / GitLab**:
-   ```bash
-   cd /home/ubuntu/ai-voicemail-agent
-   git remote add origin https://github.com/your-username/ai-voicemail-agent.git
-   git push -u origin master
-   ```
+1. **Repository**:
+   - Repository URL: `https://github.com/sudo-Unknown/ShadowVoice.git`
+   - Branch: `main`
 
 2. **Add Application in Coolify**:
    - In Coolify, navigate to your **Projects** > Click **+ New Resource**.
-   - Select **Public Repository** (or **Private Repository** with your GitHub app).
-   - Enter your repository URL (e.g., `https://github.com/your-username/ai-voicemail-agent`).
-   - Branch: `master` or `main`.
+   - Select **Public Repository** (or **Private Repository**).
+   - Enter your repository URL: `https://github.com/sudo-Unknown/ShadowVoice.git`
+   - Branch: `main`
 
 3. **Configure Build Settings**:
    - **Build Pack**: Select **`Dockerfile`**.
