@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0A0F1D"
+    android:padding="24dp">
+
+    <!-- Top: Caller Info -->
+    <LinearLayout
+        android:id="@+id/layout_caller"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_marginTop="32dp"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:background="#1E293B"
+            android:gravity="center"
+            android:text="👤"
+            android:textSize="32sp" />
+
+        <TextView
+            android:id="@+id/tv_caller_info"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="+1 (555) 0199"
+            android:textColor="#FFFFFF"
+            android:textSize="24sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tv_call_status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="Incoming Call..."
+            android:textColor="#38BDF8"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- Center: Live Transcript Stream -->
+    <ScrollView
+        android:id="@+id/scroll_transcript"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@+id/layout_actions"
+        android:layout_below="@+id/layout_caller"
+        android:layout_marginVertical="24dp"
+        android:background="#131D31"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/tv_transcript"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:lineSpacingExtra="4dp"
+            android:text="Tap 'Screen with AI' to let your AI assistant answer and transcribe the call..."
+            android:textColor="#CBD5E1"
+            android:textSize="14sp" />
+    </ScrollView>
+
+    <!-- Bottom: Actions -->
+    <LinearLayout
+        android:id="@+id/layout_actions"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="24dp"
+        android:orientation="vertical">
+
+        <!-- Take Over Call Button (Visible during AI screening) -->
+        <Button
+            android:id="@+id/btn_take_over"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginBottom="12dp"
+            android:backgroundTint="#F59E0B"
+            android:text="🎙️ Take Over Call"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+
+        <!-- Primary Screening Button -->
+        <Button
+            android:id="@+id/btn_screen_ai"
+            android:layout_width="match_parent"
+            android:layout_height="54dp"
+            android:layout_marginBottom="12dp"
+            android:backgroundTint="#6366F1"
+            android:text="🤖 Screen with ShadowVoice AI"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <!-- Answer / Decline Row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btn_decline"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_marginEnd="8dp"
+                android:layout_weight="1"
+                android:backgroundTint="#EF4444"
+                android:text="🔴 Decline"
+                android:textColor="#FFFFFF"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/btn_answer_personal"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"
+                android:backgroundTint="#10B981"
+                android:text="📞 Pick Up"
+                android:textColor="#FFFFFF"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </LinearLayout>
+
+</RelativeLayout>
