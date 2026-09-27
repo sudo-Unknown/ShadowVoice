@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EchoMe • AI Voicemail & Call Gatekeeper</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+            <path d="M14.05 2a9 9 0 0 1 8 7.94"></path>
+            <path d="M14.05 6A5 5 0 0 1 18 10"></path>
+          </svg>
+        </div>
+        <div>
+          <h1 class="brand-title">EchoMe <span class="badge-ai">AI</span></h1>
+          <p class="brand-subtitle">Voicemail & Gatekeeper</p>
+        </div>
+      </div>
+
+      <nav class="nav-menu">
+        <button class="nav-item active" data-tab="inbox">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-6l-2 3h-4l-2-3H2v7a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-7z"/><path d="M5.45 5.11L2 12v0h20v0l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+          <span>Voicemail Inbox</span>
+          <span class="nav-badge" id="unread-count">0</span>
+        </button>
+
+        <button class="nav-item" data-tab="simulator">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
+          <span>Voice Simulator</span>
+          <span class="pulse-indicator"></span>
+        </button>
+
+        <button class="nav-item" data-tab="settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+          <span>Persona & Knowledge</span>
+        </button>
+
+        <button class="nav-item" data-tab="telephony">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/><circle cx="12" cy="12" r="10"/></svg>
+          <span>Twilio Phone Setup</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-status-card">
+        <div class="status-indicator-row">
+          <span class="status-dot online"></span>
+          <span class="status-text" id="sys-status-text">LLM Engine Ready</span>
+        </div>
+        <div class="status-meta" id="sys-model-meta">Ollama: cyber-coder:fast</div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- HEADER -->
+      <header class="topbar">
+        <div>
+          <h2 class="page-title" id="page-heading">Voicemail Inbox</h2>
+          <p class="page-description" id="page-subheading">Messages and calls answered on your behalf</p>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn btn-secondary" id="btn-refresh">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>
+            <span>Refresh</span>
+          </button>
+          <button class="btn btn-primary" id="btn-open-simulator">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+            <span>Test Voice Call</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- TAB: INBOX -->
+      <section class="tab-pane active" id="tab-inbox">
+        <div class="inbox-toolbar">
+          <div class="filter-tabs">
+            <button class="filter-btn active" data-filter="all">All Calls</button>
+            <button class="filter-btn" data-filter="unread">Unread Only</button>
+            <button class="filter-btn" data-filter="urgent">Urgent First</button>
+          </div>
+          <div class="search-box">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/></svg>
+            <input type="text" id="inbox-search" placeholder="Search caller, topic, or message...">
+          </div>
+        </div>
+
+        <div class="inbox-split">
+          <!-- Voicemail List -->
+          <div class="voicemail-list" id="voicemail-list">
+            <div class="empty-state">
+              <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 12h-6l-2 3h-4l-2-3H2v7a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-7z"/><path d="M5.45 5.11L2 12v0h20v0l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+              <h3>No voicemails yet</h3>
+              <p>When someone calls your Twilio number or tests via Voice Simulator, their message will appear here.</p>
+              <button class="btn btn-outline" onclick="switchTab('simulator')">Test Simulator Now</button>
+            </div>
+          </div>
+
+          <!-- Voicemail Details View -->
+          <div class="voicemail-detail-card" id="voicemail-detail">
+            <div class="detail-placeholder">
+              <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              <p>Select a voicemail to review details, action items, and full conversation transcript</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB: VOICE SIMULATOR -->
+      <section class="tab-pane" id="tab-simulator">
+        <div class="simulator-container">
+          <div class="phone-frame">
+            <div class="phone-header">
+              <span class="phone-time" id="sim-clock">12:00</span>
+              <div class="phone-camera"></div>
+              <div class="phone-indicators">●●●</div>
+            </div>
+
+            <!-- Call State Screens -->
+            <div class="sim-idle-screen" id="sim-idle-view">
+              <div class="caller-avatar">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              </div>
+              <h3 class="sim-caller-name">Voice Call Simulator</h3>
+              <p class="sim-caller-subtitle">Talk with your AI Voicemail representative using your microphone</p>
+              
+              <div class="sim-start-actions">
+                <button class="btn-call-start" id="btn-start-call">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                  <span>Start Voice Call</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="sim-active-screen hidden" id="sim-active-view">
+              <div class="call-status-badge" id="sim-call-status">Connected</div>
+              <h3 class="active-caller-title" id="sim-owner-title">Smit's AI Assistant</h3>
+              <div class="call-timer" id="sim-call-timer">00:00</div>
+
+              <!-- Animated Sound Wave -->
+              <div class="audio-wave-container" id="sim-wave">
+                <span class="wave-bar"></span>
+                <span class="wave-bar"></span>
+                <span class="wave-bar"></span>
+                <span class="wave-bar"></span>
+                <span class="wave-bar"></span>
+                <span class="wave-bar"></span>
+                <span class="wave-bar"></span>
+                <span class="wave-bar"></span>
+              </div>
+
+              <!-- Live Subtitles / Speech Bubble -->
+              <div class="sim-dialog-box" id="sim-dialog-box">
+                <div class="dialog-speaker" id="sim-speaker-name">AI Assistant</div>
+                <div class="dialog-text" id="sim-dialog-text">Connecting...</div>
+              </div>
+
+              <!-- Phone Controls -->
+              <div class="sim-call-controls">
+                <button class="control-btn mic-btn" id="btn-toggle-mic" title="Hold or Click to Speak">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
+                </button>
+                <button class="control-btn hangup-btn" id="btn-hang-up" title="Hang Up">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7 2 2 0 0 1 1.72 2v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.42 19.42 0 0 1-3.33-2.67m-2.67-3.34a19.79 19.79 0 0 1-3.07-8.63A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91"/><line x1="1" x2="23" y1="1" y2="23"/></svg>
+                </button>
+              </div>
+
+              <div class="sim-text-fallback">
+                <input type="text" id="sim-text-input" placeholder="Or type your reply here...">
+                <button class="btn btn-sm btn-primary" id="btn-send-sim-text">Send</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Simulator Live Transcript Panel -->
+          <div class="sim-transcript-panel">
+            <div class="panel-header">
+              <h4>Live Call Transcript</h4>
+              <span class="badge-tag">Simulated Audio Turn</span>
+            </div>
+            <div class="transcript-feed" id="sim-transcript-feed">
+              <div class="empty-feed">Start the voice call to see live transcript and responses.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB: SETTINGS & KNOWLEDGE -->
+      <section class="tab-pane" id="tab-settings">
+        <div class="settings-grid">
+          <div class="settings-card">
+            <h3>Personal Identity & Role</h3>
+            <p class="card-hint">How your AI assistant identifies you and describes what you do.</p>
+            
+            <div class="form-group">
+              <label for="set-owner-name">Your Full Name</label>
+              <input type="text" id="set-owner-name" placeholder="e.g. Smit">
+            </div>
+
+            <div class="form-group">
+              <label for="set-owner-role">Professional Title / Role</label>
+              <input type="text" id="set-owner-role" placeholder="e.g. Software Engineer & AI Researcher">
+            </div>
+
+            <div class="form-group">
+              <label for="set-owner-email">Contact Email</label>
+              <input type="email" id="set-owner-email" placeholder="e.g. smit@example.com">
+            </div>
+          </div>
+
+          <div class="settings-card">
+            <h3>Live Availability Status</h3>
+            <p class="card-hint">The AI uses this to inform callers whether you can be reached or when you'll be free.</p>
+            
+            <div class="form-group">
+              <label for="set-owner-status">Current Status Note</label>
+              <textarea id="set-owner-status" rows="3" placeholder="e.g. In deep focus work until 5:00 PM. Available only for production emergencies."></textarea>
+            </div>
+
+            <div class="quick-status-chips">
+              <button class="status-chip" data-status="In deep focus work until 5:00 PM. Available only for urgent matters.">Deep Focus</button>
+              <button class="status-chip" data-status="In client meetings until 3:30 PM. Please leave your contact details.">In Meetings</button>
+              <button class="status-chip" data-status="Traveling with limited phone connectivity. I will review voicemails this evening.">Traveling</button>
+              <button class="status-chip" data-status="Available today for project inquiries and collaboration.">Available</button>
+            </div>
+          </div>
+
+          <div class="settings-card full-width">
+            <h3>Knowledge Base & Background</h3>
+            <p class="card-hint">Details about your skills, current projects, and services so the AI can answer caller questions intelligently.</p>
+            
+            <div class="form-group">
+              <label for="set-owner-bio">Bio & Background Information</label>
+              <textarea id="set-owner-bio" rows="3" placeholder="Specializes in AI systems, full-stack software development, cybersecurity, and cloud automation."></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="set-custom-instructions">Custom Gatekeeping Instructions</label>
+              <textarea id="set-custom-instructions" rows="3" placeholder="Be courteous, concise, and helpful. Ask for their name and phone number. If it is an urgent production outage, assure them I am notified right away."></textarea>
+            </div>
+
+            <div class="settings-actions">
+              <button class="btn btn-primary" id="btn-save-settings">Save Changes</button>
+              <span class="save-status-msg" id="save-status-msg"></span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB: TELEPHONY & TWILIO SETUP -->
+      <section class="tab-pane" id="tab-telephony">
+        <div class="telephony-guide">
+          <div class="guide-banner">
+            <div class="banner-icon">
+              <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+            </div>
+            <div>
+              <h3>Connect a Real Phone Number via Twilio</h3>
+              <p>Follow these 3 simple steps to have your AI answer real incoming calls from any mobile phone.</p>
+            </div>
+          </div>
+
+          <div class="setup-steps">
+            <div class="step-card">
+              <div class="step-number">1</div>
+              <h4>Expose Server with Cloudflare Tunnel</h4>
+              <p>Run the tunnel script in terminal to get an instant public HTTPS address for this machine:</p>
+              <div class="code-box">
+                <code>npm run tunnel</code>
+                <button class="btn-copy" onclick="navigator.clipboard.writeText('npm run tunnel')">Copy</button>
+              </div>
+              <p class="step-subtext">This uses the installed <code>cloudflared</code> binary to route incoming traffic securely.</p>
+            </div>
+
+            <div class="step-card">
+              <div class="step-number">2</div>
+              <h4>Configure Twilio Phone Number</h4>
+              <p>Open your <strong>Twilio Console</strong> &gt; <strong>Phone Numbers</strong> &gt; <strong>Active Numbers</strong>:</p>
+              <ul class="step-list">
+                <li>Scroll down to the <strong>Voice Configuration</strong> section.</li>
+                <li>Under <strong>"A Call Comes In"</strong>, select <code>Webhook</code>.</li>
+                <li>Paste your webhook URL:
+                  <div class="code-box">
+                    <code>https://&lt;your-tunnel-subdomain&gt;/api/twilio/voice</code>
+                  </div>
+                </li>
+                <li>Set HTTP Method to <code>HTTP POST</code> and click <strong>Save</strong>.</li>
+              </ul>
+            </div>
+
+            <div class="step-card">
+              <div class="step-number">3</div>
+              <h4>Call Your Number &amp; Talk!</h4>
+              <p>Dial your Twilio phone number from any phone. The AI representative will answer, greet you warmly, converse in natural spoken voice, take your message, and immediately post the parsed voicemail to this inbox!</p>
+            </div>
+          </div>
+
+          <div class="settings-card full-width">
+            <h3>Voice Engine Configuration</h3>
+            <div class="info-table-row">
+              <span class="label">Twilio Neural Voice:</span>
+              <span class="val">Polly.Matthew-Neural (en-US)</span>
+            </div>
+            <div class="info-table-row">
+              <span class="label">Twilio Webhook Endpoints:</span>
+              <span class="val"><code>/api/twilio/voice</code>, <code>/api/twilio/gather</code>, <code>/api/twilio/status</code></span>
+            </div>
+            <div class="info-table-row">
+              <span class="label">Instant Notifications:</span>
+              <span class="val">Discord Webhook / Telegram (configurable in <code>.env</code>)</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
