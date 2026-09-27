@@ -1,4 +1,4 @@
-# EchoMe • AI Voicemail & Call Gatekeeper Agent 🎙️
+# ShadowVoice • AI Voicemail & Call Gatekeeper Agent 🎙️
 
 An intelligent, conversational AI representative that answers phone calls on your behalf like an interactive voicemail. It speaks with callers in natural voice, answers questions about your schedule and work, screens incoming inquiries, records structured voicemails, and flags urgent matters immediately.
 

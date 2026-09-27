@@ -1,5 +1,5 @@
 {
-  "name": "ai-voicemail-agent",
+  "name": "shadow-voice",
   "version": "1.0.0",
   "description": "AI-powered conversational voicemail and personal call gatekeeper agent",
   "main": "src/server.js",

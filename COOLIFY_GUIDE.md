@@ -1,6 +1,6 @@
-# Self-Hosting EchoMe on Coolify 🚀
+# Self-Hosting ShadowVoice on Coolify 🚀
 
-This guide provides end-to-end instructions for self-hosting **EchoMe (AI Voicemail & Call Gatekeeper)** on your own server or VPS using **Coolify**.
+This guide provides end-to-end instructions for self-hosting **ShadowVoice (AI Voicemail & Call Gatekeeper)** on your own server or VPS using **Coolify**.
 
 ---
 
