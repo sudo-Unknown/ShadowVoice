@@ -102,6 +102,37 @@ class ShadowVoiceApiClient(var baseUrl: String = "https://call.smitronix.dev") {
         }
     }
 
+    suspend fun markVoicemailRead(callId: String): Result<Boolean> = withContext(Dispatchers.IO) {
+        try {
+            val body = "{\"is_read\":1}".toRequestBody(jsonMediaType)
+            val request = Request.Builder()
+                .url("$baseUrl/api/voicemails/$callId/read")
+                .patch(body)
+                .build()
+
+            client.newCall(request).execute().use { response ->
+                Result.success(response.isSuccessful)
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun deleteVoicemail(callId: String): Result<Boolean> = withContext(Dispatchers.IO) {
+        try {
+            val request = Request.Builder()
+                .url("$baseUrl/api/voicemails/$callId")
+                .delete()
+                .build()
+
+            client.newCall(request).execute().use { response ->
+                Result.success(response.isSuccessful)
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     suspend fun checkServerStatus(): Result<SystemStatusResponse> = withContext(Dispatchers.IO) {
         try {
             val request = Request.Builder()
@@ -115,6 +146,87 @@ class ShadowVoiceApiClient(var baseUrl: String = "https://call.smitronix.dev") {
                 }
                 val respBody = response.body?.string() ?: ""
                 val data = gson.fromJson(respBody, SystemStatusResponse::class.java)
+                Result.success(data)
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun fetchSystemMetrics(): Result<SystemMetricsResponse> = withContext(Dispatchers.IO) {
+        try {
+            val request = Request.Builder()
+                .url("$baseUrl/api/system/metrics")
+                .get()
+                .build()
+
+            client.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) {
+                    return@withContext Result.failure(Exception("HTTP ${response.code}"))
+                }
+                val respBody = response.body?.string() ?: ""
+                val data = gson.fromJson(respBody, SystemMetricsResponse::class.java)
+                Result.success(data)
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun fetchContainers(): Result<DockerContainersResponse> = withContext(Dispatchers.IO) {
+        try {
+            val request = Request.Builder()
+                .url("$baseUrl/api/system/containers")
+                .get()
+                .build()
+
+            client.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) {
+                    return@withContext Result.failure(Exception("HTTP ${response.code}"))
+                }
+                val respBody = response.body?.string() ?: ""
+                val data = gson.fromJson(respBody, DockerContainersResponse::class.java)
+                Result.success(data)
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun controlContainer(idOrName: String, action: String): Result<Boolean> = withContext(Dispatchers.IO) {
+        try {
+            val body = "".toRequestBody(jsonMediaType)
+            val request = Request.Builder()
+                .url("$baseUrl/api/system/containers/$idOrName/$action")
+                .post(body)
+                .build()
+
+            client.newCall(request).execute().use { response ->
+                Result.success(response.isSuccessful)
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun sendAssistantMessage(
+        message: String,
+        history: List<Map<String, String>> = emptyList()
+    ): Result<AssistantResponse> = withContext(Dispatchers.IO) {
+        try {
+            val json = gson.toJson(AssistantRequest(message = message, history = history))
+            val body = json.toRequestBody(jsonMediaType)
+            val request = Request.Builder()
+                .url("$baseUrl/api/system/assistant")
+                .post(body)
+                .build()
+
+            client.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) {
+                    return@withContext Result.failure(Exception("HTTP ${response.code}"))
+                }
+                val respBody = response.body?.string() ?: ""
+                val data = gson.fromJson(respBody, AssistantResponse::class.java)
                 Result.success(data)
             }
         } catch (e: Exception) {

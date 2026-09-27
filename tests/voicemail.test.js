@@ -155,4 +155,24 @@ describe('AI Voicemail & Gatekeeper Test Suite', () => {
     // Clean up
     deleteVoicemail('test-twilio-call-1');
   });
+
+  test('System Hub API: GET /api/system/metrics returns host resource telemetry', async () => {
+    const res = await fetch(`http://localhost:${testPort}/api/system/metrics`);
+    assert.strictEqual(res.status, 200);
+    const data = await res.json();
+    assert.ok(data.host, 'Should include host info');
+    assert.ok(data.cpu, 'Should include cpu info');
+    assert.ok(data.memory, 'Should include memory info');
+    assert.ok(data.disk, 'Should include disk info');
+    assert.ok(data.memory.totalGB > 0, 'Total RAM should be positive');
+  });
+
+  test('System Hub API: GET /api/system/containers returns container status', async () => {
+    const res = await fetch(`http://localhost:${testPort}/api/system/containers`);
+    assert.strictEqual(res.status, 200);
+    const data = await res.json();
+    assert.ok(typeof data.available === 'boolean', 'available should be boolean');
+    assert.ok(Array.isArray(data.containers), 'containers should be an array');
+  });
 });
+

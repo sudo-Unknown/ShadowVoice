@@ -33,6 +33,9 @@ services:
       - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID:-}
     volumes:
       - voicemail_data:/app/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    group_add:
+      - "988"
     extra_hosts:
       # Allows reaching Ollama running on the host machine
       - "host.docker.internal:host-gateway"

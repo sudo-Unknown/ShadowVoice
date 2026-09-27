@@ -1,70 +1,90 @@
-# ShadowVoice • Native Android Call Screener & Voicemail App 📱
+# ShadowVoice Hub • Unified Android Super-App 📱⚡
 
-The native Android companion app for **ShadowVoice**. It intercepts incoming telephone calls directly on your Android smartphone, allows you to screen calls using your self-hosted AI representative, streams live transcripts to your screen, and records voicemails with zero Twilio fees!
+The unified Android Super-App companion for **ShadowVoice**. It bridges your smartphone's cellular telephone network with your self-hosted VPS, Docker infrastructure, and AI representative — all in a single native APK with zero carrier fees!
 
 ---
 
-## 🌟 Key Features
+## 🌟 4-in-1 Super-App Features
 
-1. **Native Telecom Integration (`InCallService`)**:
-   - Replaces the default phone screen when a call arrives.
-   - Adds a prominent **"🤖 Screen with ShadowVoice AI"** button.
-2. **Multilingual Voice Support**:
-   - **मराठी (Marathi)**: Native Marathi speech recognition & Text-to-Speech (`mr-IN`).
-   - **हिन्दी (Hindi)**: Native Hindi speech recognition & Text-to-Speech (`hi-IN`).
-   - **English**: Indian English (`en-IN`) & US English (`en-US`).
-   - **Auto-Detect**: Automatically detects language and responds in the caller's language.
-3. **Live Streaming Call Transcript**:
-   - Watch the caller's spoken words and the AI's spoken answers stream live on your screen in real time.
-4. **"Take Over Call" Button**:
-   - If an important caller is on the line, tap **Take Over Call** anytime to mute the AI and speak to them personally.
-5. **Zero Twilio Fees**:
-   - Runs directly on your phone's cellular SIM card and carrier network.
+### 1. 📞 Cellular Call Screener & Voicemail Inbox
+- **Telecom `InCallService` Integration**: Replaces the default phone screen when a call arrives on your phone.
+- **"🤖 Screen with AI" Button**: Answers the call on speakerphone, speaks the greeting, listens to the caller, and streams live transcripts to your screen.
+- **"🎙️ Take Over Call"**: Instantly silence the AI and take over the call whenever you want to speak directly to the caller.
+- **Multilingual Support**: Supports **मराठी (Marathi)**, **हिन्दी (Hindi)**, and **English** with auto-detection.
+- **In-App Voicemail Inbox**: View all recorded voicemails with caller names, phone numbers, urgency tags (🔴 High, 🟡 Medium, 🟢 Low), summaries, and action items.
+
+### 2. 🖥️ VPS & Docker Infrastructure Monitor
+- **Live System Telemetry**: Real-time cards displaying:
+  - ⚡ **CPU Load**: % load, cores, and processor model.
+  - 🧠 **Memory (RAM)**: % utilized and exact `GB Used / GB Total`.
+  - 💾 **Disk Storage**: % used and free capacity.
+  - ⏱️ **Host Uptime & OS Platform**: Live hours and platform metrics.
+- **Docker Container Management**:
+  - Full list of all 38+ Docker containers (`coolify`, `ai-voicemail-agent`, `n8n`, `pihole`, `wireguard`, `stremio`, etc.).
+  - Live status indicators (🟢 running, 🔴 exited).
+  - One-tap **🔄 Restart** button per container directly from your phone!
+- **Quick Service Launchers**: Direct one-tap buttons to open your web tools:
+  - 🌐 **Coolify Control Panel** (`https://coolify.smitronix.dev`)
+  - 🎙️ **ShadowVoice Web Dashboard** (`https://call.smitronix.dev`)
+
+### 3. 🤖 AI System Copilot (Voice & Text)
+- Tap the microphone button and talk to your server in **मराठी**, **हिन्दी**, or **English**:
+  - *"How is my server health right now?"*
+  - *"Who called me today and what are the voicemails?"*
+  - *"सध्या सर्व्हर आणि कंटेनर्सचे काय स्टेटस आहे?"* (What's the status of the server and containers?)
+  - *"Restart container n8n"*
+- The copilot inspects live server telemetry, checks SQLite voicemails, queries Docker, and speaks back in your chosen language!
+- Automated action execution: When you ask it to restart a container, it triggers the restart directly via the Docker API.
+
+### 4. ⚙️ Centralized Settings
+- Configure your VPS endpoint URL (preconfigured to `https://call.smitronix.dev`).
+- Switch voice language preferences (`🌐 Multilingual Auto-Detect`, `🇮🇳 मराठी`, `🇮🇳 हिन्दी`, `🇮🇳 English (India)`, `🇺🇸 English (US)`).
 
 ---
 
 ## 🚀 How to Build & Install
 
 ### Step 1: Open in Android Studio
-1. Clone this repository to your laptop/workstation:
+1. Clone this repository to your computer:
    ```bash
    git clone https://github.com/sudo-Unknown/ShadowVoice.git
    ```
-2. In Android Studio, select **Open** > choose the **`android-app`** folder.
-3. Allow Gradle to sync dependencies.
+2. In Android Studio, click **File > Open** and select the **`android-app`** directory.
+3. Wait a few moments for Gradle to sync dependencies.
 
-### Step 2: Build & Install on Your Phone
-1. Connect your Android smartphone via USB (enable **USB Debugging** in Developer Options).
-2. Click the green **Run (▶)** button in Android Studio, or build an APK via:
+### Step 2: Build & Run on Your Phone
+1. Connect your Android device via USB with **USB Debugging** enabled.
+2. Click the green **Run (▶)** button in Android Studio, or build an APK via terminal:
    ```bash
    ./gradlew assembleDebug
    ```
    The APK will be generated at: `app/build/outputs/apk/debug/app-debug.apk`.
-3. Transfer and install the APK onto your phone.
+3. Install the APK on your device.
 
-### Step 3: Enable Permissions on Your Phone
-1. Open the **ShadowVoice** app on your phone.
-2. Grant the requested permissions:
+### Step 3: Grant Permissions on Your Phone
+1. Open **ShadowVoice Hub** on your phone.
+2. Grant requested permissions:
    - **Phone State & Answer Calls**: Allows answering incoming calls.
-   - **Microphone**: Allows the AI to listen to caller speech.
+   - **Microphone**: Allows the AI to listen to caller speech & your voice commands.
    - **Notifications**: Alerts you when a voicemail is logged.
-3. Tap **"Set as Default Phone App"** in the app to enable the incoming call screener overlay.
-
-### Step 4: Configure Your Server
-1. In the app settings:
-   - **Server Endpoint**: `https://call.smitronix.dev`
-   - **AI Voice & Language**: Select `🌐 Multilingual Auto-Detect`, `🇮🇳 मराठी`, or `🇮🇳 हिन्दी`.
-2. Tap **Save Settings**.
+3. Tap **"Set as Default Phone Screener"** to enable call interception.
 
 ---
 
-## 📞 How Call Screening Works in Action
+## 📡 Backend Architecture
 
-1. Someone dials your actual personal SIM number.
-2. Your phone rings with the ShadowVoice screen.
-3. Tap **"Screen with ShadowVoice AI"**:
-   - The app answers the call on speakerphone.
-   - The AI greets the caller in your selected language (e.g. Marathi: *"नमस्कार! मी Asmit यांचा एआय प्रतिनिधी बोलत आहे..."*).
-   - The caller speaks their message.
-   - The live transcript updates on your phone in real time.
-   - When the caller finishes, the AI confirms saving the message, hangs up, and logs the structured voicemail to your dashboard at `https://call.smitronix.dev`.
+```
+[ Android Smartphone ]
+       │
+       ├── Calls: Native InCallService + SpeechRecognizer / TTS
+       ├── UI: Call Screener, Voicemail Inbox, VPS Telemetry, Docker Manager
+       │
+       ▼ HTTPS (Let's Encrypt SSL)
+[ call.smitronix.dev (Docker Port 3050) ]
+       │
+       ├── /api/simulator/turn  ──> Groq Cloud (qwen/qwen3.8-27b) [130ms turnaround]
+       ├── /api/voicemails      ──> SQLite Database (/app/data/voicemail.sqlite)
+       ├── /api/system/metrics  ──> Host CPU, RAM, Disk, Uptime
+       ├── /api/system/containers ──> Docker Unix Socket (/var/run/docker.sock)
+       └── /api/system/assistant ──> AI System Copilot
+```

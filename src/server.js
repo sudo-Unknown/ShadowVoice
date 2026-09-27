@@ -17,6 +17,13 @@ import {
 } from './db.js';
 import { generateAgentResponse, extractAndSaveVoicemail } from './llm.js';
 import { handleVoice, handleGather, handleStatus } from './twilioHandler.js';
+import {
+  getSystemMetrics,
+  getDockerContainers,
+  controlContainer,
+  getContainerLogs,
+  systemAssistantTurn
+} from './system.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -204,6 +211,70 @@ app.get('/api/status', async (req, res) => {
     port: config.port
   });
 });
+
+/* =========================================================================
+   SYSTEM TELEMETRY & VPS DOCKER HUB API
+   ========================================================================= */
+
+// Get host system resource metrics (CPU, RAM, Disk, Uptime)
+app.get('/api/system/metrics', (req, res) => {
+  try {
+    const metrics = getSystemMetrics();
+    res.json(metrics);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to retrieve system metrics: ' + err.message });
+  }
+});
+
+// List all Docker containers and their states
+app.get('/api/system/containers', async (req, res) => {
+  try {
+    const data = await getDockerContainers();
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to list containers: ' + err.message });
+  }
+});
+
+// Control container (restart, start, stop)
+app.post('/api/system/containers/:id/:action', async (req, res) => {
+  const { id, action } = req.params;
+  try {
+    const result = await controlContainer(id, action);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get container tail logs
+app.get('/api/system/containers/:id/logs', async (req, res) => {
+  const { id } = req.params;
+  const tail = parseInt(req.query.tail, 10) || 100;
+  try {
+    const result = await getContainerLogs(id, tail);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// AI System Assistant / Copilot
+app.post('/api/system/assistant', async (req, res) => {
+  const { message, history } = req.body;
+  if (!message || typeof message !== 'string') {
+    return res.status(400).json({ error: 'Missing or invalid message' });
+  }
+
+  try {
+    const result = await systemAssistantTurn(message, history || []);
+    res.json(result);
+  } catch (err) {
+    console.error('[System Assistant Error]', err);
+    res.status(500).json({ error: 'Assistant error: ' + err.message });
+  }
+});
+
 
 // Fallback to index.html for client-side routing
 app.get('*', (req, res) => {
